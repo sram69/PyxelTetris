@@ -2,7 +2,7 @@ import random
 import pyxel
 import requests
 
-BACKEND = "http://tetris.mathias.hackclub.app"
+BACKEND = "http://37.27.51.34:20320"
 
 # Game dimensions
 CELL_SIZE = 16
