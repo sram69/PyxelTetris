@@ -1,5 +1,8 @@
 import random
 import pyxel
+import requests
+
+BACKEND = "http://tetris.mathias.hackclub.app"
 
 # Game dimensions
 CELL_SIZE = 16
@@ -21,13 +24,16 @@ PIECES = [
 
 class TetrisEngine:
     def __init__(self):
-        pyxel.init(WINDOW_WIDTH, WINDOW_HEIGHT, title="Tetris on Pyxel")# I'm not lazy I'm not lazy I'm not lazy I
+        pyxel.init(WINDOW_WIDTH, WINDOW_HEIGHT, title="Tetris on Pyxel")
         self.board = [[0 for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
         self.current_piece = random.choice(PIECES)
         self.current_x = BOARD_WIDTH // 2 - 2
         self.current_y = 0
         self.score = 0
+        self.saving = False
         self.tick = 0
+        self.bestScore = requests.get(f"{BACKEND}/get").json()[0]
+        print(f"Your best score is {self.bestScore}")
         self.is_game_over = False
         pyxel.run(self.update, self.draw)
 
@@ -86,7 +92,7 @@ class TetrisEngine:
                     self.board.pop(y)
                     self.board.insert(0, [0] * BOARD_WIDTH)
                     rows_cleared += 1
-            self.score += rows_cleared ** 2
+            self.score += rows_cleared
 
             self.current_piece = random.choice(PIECES)
             self.current_x = BOARD_WIDTH // 2 - 2
@@ -106,9 +112,18 @@ class TetrisEngine:
             pyxel.rect((self.current_x + x) * CELL_SIZE, (self.current_y + y) * CELL_SIZE, CELL_SIZE, CELL_SIZE, 11)
 
         pyxel.text(4, 4, f"Score: {self.score}", 10)
+        pyxel.text(100, 4, f"Best Score: {self.bestScore}", 10)
 
         if self.is_game_over:
             pyxel.text(BOARD_WIDTH * CELL_SIZE // 2 -20, BOARD_HEIGHT * CELL_SIZE // 2 - 10, "GAME OVER", 8)
+            if self.score > self.bestScore:
+                pyxel.text(BOARD_WIDTH * CELL_SIZE // 2, BOARD_HEIGHT * CELL_SIZE // 2, "NEW BEST SCORE!", 8)
+            if self.score > self.bestScore and not self.saving:
+                self.saving = True
+                requests.get(f"{BACKEND}/set?s={self.score}")
+                print("Best score saved")
+                self.tick = 5
+            
 
 if __name__ == "__main__":
     TetrisEngine()
